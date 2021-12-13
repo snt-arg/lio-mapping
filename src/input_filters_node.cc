@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
   ros::NodeHandle nh("~");
 
   ros::Subscriber sub_raw_points = nh.subscribe<sensor_msgs::PointCloud2>
-      ("/velodyne_points", 2, PointCloudHandler);
+      ("/platform/velodyne_points", 2, PointCloudHandler);
 
   br_ptr = new tf::TransformBroadcaster();
   pub_filtered_cloud = nh.advertise<sensor_msgs::PointCloud2>("/filtered_points", 2);

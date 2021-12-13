@@ -71,8 +71,8 @@ typedef pair<vector<ImuMsgConstPtr>, CompactDataConstPtr> PairMeasurement;
 typedef vector<PairMeasurement> PairMeasurements;
 
 struct MeasurementManagerConfig {
-  string imu_topic = "/imu/data";
-  string laser_topic = "/velodyne_points";
+  string imu_topic = "/platform/imu/data";
+  string laser_topic = "/platform/velodyne_points";
   string laser_odom_topic = "/aft_mapped_to_init"; // NOTE: Check if the time is too long
   string compact_data_topic = "/compact_data"; // NOTE: Check if the time is too long
   double msg_time_delay = 0;

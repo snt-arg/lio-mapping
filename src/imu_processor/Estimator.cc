@@ -291,32 +291,32 @@ void Estimator::SetupRos(ros::NodeHandle &nh) {
   MeasurementManager::SetupRos(nh);
   PointMapping::SetupRos(nh, false);
 
-  wi_trans_.frame_id_ = "/camera_init";
-  wi_trans_.child_frame_id_ = "/world";
+  wi_trans_.frame_id_ = "camera_init";
+  wi_trans_.child_frame_id_ = "world";
 
   wi_trans_.setRotation(tf::Quaternion(0, 0, 0, 1));
   wi_trans_.setOrigin(tf::Vector3(0, 0, 0));
 
-  laser_local_trans_.frame_id_ = "/world";
-  laser_local_trans_.child_frame_id_ = "/laser_local";
+  laser_local_trans_.frame_id_ = "world";
+  laser_local_trans_.child_frame_id_ = "laser_local";
 
   laser_local_trans_.setRotation(tf::Quaternion(0, 0, 0, 1));
   laser_local_trans_.setOrigin(tf::Vector3(0, 0, 0));
 
-  laser_predict_trans_.frame_id_ = "/laser_local";
-  laser_predict_trans_.child_frame_id_ = "/laser_predict";
+  laser_predict_trans_.frame_id_ = "laser_local";
+  laser_predict_trans_.child_frame_id_ = "laser_predict";
   laser_predict_trans_.setIdentity();
 
-  predict_odom_.header.frame_id = "/world";
-  predict_odom_.child_frame_id = "/imu_predict";
+  predict_odom_.header.frame_id = "world";
+  predict_odom_.child_frame_id = "imu_predict";
   pub_predict_odom_ = nh.advertise<nav_msgs::Odometry>("/predict_odom", 100);
 
-  laser_odom_.header.frame_id = "/world";
-  laser_odom_.child_frame_id = "/laser_predict";
+  laser_odom_.header.frame_id = "world";
+  laser_odom_.child_frame_id = "laser_predict";
   pub_laser_odom_ = nh.advertise<nav_msgs::Odometry>("/predict_laser_odom", 100);
 
-  local_odom_.header.frame_id = "/world";
-  local_odom_.child_frame_id = "/laser_predict";
+  local_odom_.header.frame_id = "world";
+  local_odom_.child_frame_id = "laser_predict";
   pub_local_odom_ = nh.advertise<nav_msgs::Odometry>("/local_laser_odom", 100);
 
   pub_plane_normal_ = nh.advertise<visualization_msgs::MarkerArray>("/debug/plane_normal", 5);
@@ -978,7 +978,6 @@ void Estimator::CalculateFeatures(const pcl::KdTreeFLANN<PointT>::Ptr &kdtree_su
   if (!estimator_config_.keep_features) {
     features.clear();
   }
-
   std::vector<int> point_search_idx(5, 0);
   std::vector<float> point_search_sq_dis(5, 0);
   Eigen::Matrix<float, 5, 3> mat_A0;
@@ -1013,9 +1012,21 @@ void Estimator::CalculateFeatures(const pcl::KdTreeFLANN<PointT>::Ptr &kdtree_su
 
   for (int i = 0; i < surf_points_size; i++) {
     point_ori = origin_surf_points->points[i];
+    //ROS_INFO_STREAM(point_sel.x);
+    // if(point_sel.x == 0){
+    //   ROS_INFO_STREAM(point_sel);
+    //   ROS_INFO_STREAM("skipping");
+    //   continue;
+    // }
+    
     PointAssociateToMap(point_ori, point_sel, transform_to_local);
-
+    
     int num_neighbors = 5;
+    if(point_sel.x == 0){
+      ROS_INFO_STREAM(point_sel);
+      ROS_INFO_STREAM("skipping");
+      continue;
+    }
     kdtree_surf_from_map->nearestKSearch(point_sel, num_neighbors, point_search_idx, point_search_sq_dis);
 
     if (point_search_sq_dis[num_neighbors - 1] < min_match_sq_dis_) {
@@ -1101,6 +1112,7 @@ void Estimator::CalculateFeatures(const pcl::KdTreeFLANN<PointT>::Ptr &kdtree_su
   for (int i = 0; i < corner_points_size; i++) {
     point_ori = origin_corner_points->points[i];
     PointAssociateToMap(point_ori, point_sel, transform_to_local);
+    
     kdtree_corner_from_map->nearestKSearch(point_sel, 5, point_search_idx, point_search_sq_dis);
 
     if (point_search_sq_dis[4] < min_match_sq_dis_) {
@@ -1422,10 +1434,12 @@ void Estimator::BuildLocalMap(vector<FeaturePerFrame> &feature_frames) {
 
         Twist<double> transform_li = Twist<double>(rot_li, pos_li);
         Eigen::Affine3f transform_pivot_i = (transform_pivot.inverse() * transform_li).cast<float>().transform();
+        
         pcl::transformPointCloud(*(surf_stack_[i]), transformed_cloud_surf, transform_pivot_i);
         tmp_cloud_surf += transformed_cloud_surf;
 
 #ifdef USE_CORNER
+        
         pcl::transformPointCloud(*(corner_stack_[i]), transformed_cloud_corner, transform_pivot_i);
         tmp_cloud_corner += transformed_cloud_corner;
 #endif
@@ -1490,13 +1504,17 @@ void Estimator::BuildLocalMap(vector<FeaturePerFrame> &feature_frames) {
         }
         //region fix the map
 #ifdef FIX_MAP
+        
         pcl::transformPointCloud(*(surf_stack_[i]), transformed_cloud_surf, transform_linearized_pivot_i);
 #ifdef USE_CORNER
+        
         pcl::transformPointCloud(*(corner_stack_[i]), transformed_cloud_corner, transform_linearized_pivot_i);
 #endif
 #else
+        
         pcl::transformPointCloud(*(surf_stack_[i]), transformed_cloud_surf, transform_pivot_i);
 #ifdef USE_CORNER
+        
         pcl::transformPointCloud(*(corner_stack_[i]), transformed_cloud_corner, transform_pivot_i);
 #endif
 #endif
@@ -2597,8 +2615,9 @@ void Estimator::SlideWindow() { // NOTE: this function is only for the states an
 
       Twist<double> transform_li = Twist<double>(rot_li, pos_li);
       Eigen::Affine3f transform_i_pivot = (transform_li.inverse() * transform_pivot).cast<float>().transform();
+      //std::cout<<transform_li.inverse()<<std::endl;
       pcl::ExtractIndices<PointT> extract;
-
+      //ROS_INFO_STREAM("Here 7");
       pcl::transformPointCloud(*(surf_stack_[pivot_idx]), *transformed_cloud_surf_ptr, transform_i_pivot);
       pcl::PointIndices::Ptr inliers_surf(new pcl::PointIndices());
 
@@ -2615,6 +2634,7 @@ void Estimator::SlideWindow() { // NOTE: this function is only for the states an
       *(surf_stack_[i]) = filtered_surf_points;
 
 #ifdef USE_CORNER
+      //("Here 8");
       pcl::transformPointCloud(*(corner_stack_[pivot_idx]), *transformed_cloud_corner_ptr, transform_i_pivot);
       pcl::PointIndices::Ptr inliers_corner(new pcl::PointIndices());
 

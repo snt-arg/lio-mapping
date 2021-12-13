@@ -93,11 +93,11 @@ PointMapping::PointMapping(float scan_period,
       laser_cloud_corner_from_map_(new PointCloud()),
       laser_cloud_surf_from_map_(new PointCloud()) {
   // initialize mapping odometry and odometry tf messages
-  odom_aft_mapped_.header.frame_id = "/camera_init";
-  odom_aft_mapped_.child_frame_id = "/aft_mapped";
+  odom_aft_mapped_.header.frame_id = "camera_init";
+  odom_aft_mapped_.child_frame_id = "aft_mapped";
 
-  aft_mapped_trans_.frame_id_ = "/camera_init";
-  aft_mapped_trans_.child_frame_id_ = "/aft_mapped";
+  aft_mapped_trans_.frame_id_ = "camera_init";
+  aft_mapped_trans_.child_frame_id_ = "aft_mapped";
 
   // initialize frame counter
   frame_count_ = num_stack_frames_ - 1;
@@ -159,7 +159,7 @@ void PointMapping::SetupRos(ros::NodeHandle &nh, bool enable_sub) {
           ("/full_odom_cloud", 2, &PointMapping::LaserFullCloudHandler, this);
 
       sub_laser_odometry_ = nh.subscribe<nav_msgs::Odometry>
-          ("/laser_odom_to_init", 2, &PointMapping::LaserOdometryHandler, this);
+          ("/platform/reset_odometry", 2, &PointMapping::LaserOdometryHandler, this);
 
 //  sub_imu_trans_ = node.subscribe<sensor_msgs::PointCloud2>
 //      ("/imu_trans", 5, &LaserOdometry::ImuTransHandler, this);
@@ -304,6 +304,7 @@ void PointMapping::PointAssociateToMap(const PointT &pi, PointT &po, const Trans
   po.x = pi.x;
   po.y = pi.y;
   po.z = pi.z;
+  
   po.intensity = pi.intensity;
 
   RotatePoint(transform_tobe_mapped.rot, po);
