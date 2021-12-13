@@ -26,7 +26,11 @@ See [Dockerfile](docker/Dockerfile) as a reference:
 
 ## Build
 1. `git clone git@github.com:hyye/lio-mapping.git` into the `src` folder of your catkin workspace.
-2. `catkin build -DCMAKE_BUILD_TYPE=Release lio` or `catkin_make -DCMAKE_BUILD_TYPE=Release`.
+2. `Remove all "/" from the frame_ids.
+3. `Change imu topic in MeasurementManager.h to /platform/imu/data
+4. `Change laser topic in MeasurementManager.h, PointProcessor.cc, input_filters_node to /platform/velodyne_points.
+5. 'Change Odometry topic in PointMapping.cc to /platform/reset_odometry.
+6. `catkin build -DCMAKE_BUILD_TYPE=Release lio` or `catkin_make -DCMAKE_BUILD_TYPE=Release`.
 
 ## Examples
 Some [sample data](https://drive.google.com/drive/folders/1dPy667dAnJy9wgXmlnRgQZxQF_ESuve3).
